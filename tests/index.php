@@ -95,50 +95,5 @@
     var osmb = new L.BuildingsLayer({ url: '../server/?w={w}&n={n}&e={e}&s={s}&z={z}' }).addTo(map);
     L.control.layers({}, { Buildings: osmb }).addTo(map);
     </script>
-
-    <script>
-    var timeRange = document.querySelector('#time');
-    var timeRangeLabel = document.querySelector('*[for=time]');
-
-    var dateRange = document.querySelector('#date');
-    var dateRangeLabel = document.querySelector('*[for=date]');
-
-    // var date = new Date();
-    var date = new Date(2013, 2, 15, 10, 30);
-
-    var timeScale = 4,
-		dateScale = 2,
-		Y = date.getFullYear(),
-        M = date.getMonth(),
-        D = date.getDate() < 15 ? 1 : 15,
-        h = date.getHours(),
-        m = date.getMinutes() % 4 * 15;
-
-	timeRange.value = h * timeScale;
-    dateRange.value = M * dateScale;
-    changeDate();
-
-    function pad(v) {
-        return (v < 10 ? '0' : '') + v;
-    }
-
-    function changeDate() {
-        timeRangeLabel.innerText = 'Time: ' + pad(h) + ':' + pad(m);
-        dateRangeLabel.innerText = 'Date: ' + Y + '-' + pad(M+1) + '-' + pad(D);
-        osmb.setDate(new Date(Y, M, D, h, m));
-    }
-
-    timeRange.addEventListener('change', function () {
-        h = this.value / timeScale <<0;
-        m = this.value % timeScale * 15;
-        changeDate();
-    }, false);
-
-    dateRange.addEventListener('change', function () {
-        M = this.value / dateScale <<0;
-        D = this.value % dateScale ? 15 : 1;
-        changeDate();
-    }, false);
-    </script>
 </body>
 </html>

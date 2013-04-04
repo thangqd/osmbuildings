@@ -10,8 +10,6 @@ var Layers = {
         container.style.left = 0;
         container.style.top = 0;
 
-        Shadows.init(this.create());
-        FlatBuildings.init(this.create());
         context = this.create();
 
         parentNode.appendChild(container);
@@ -29,7 +27,7 @@ var Layers = {
         var context = canvas.getContext('2d');
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.lineWidth = 1;
+        context.lineWidth = 2;
 
         try {
             context.mozImageSmoothingEnabled = false;

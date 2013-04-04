@@ -2,7 +2,6 @@
 function fadeIn() {
     clearInterval(fadeTimer);
     fadeFactor = 0;
-    FlatBuildings.render();
     fadeTimer = setInterval(function () {
         fadeFactor += 0.5 * 0.2; // amount * easing
         if (fadeFactor > 1) {
@@ -13,19 +12,18 @@ function fadeIn() {
                 data[i][IS_NEW] = 0;
             }
         }
-        Shadows.render();
         render();
     }, 33);
 }
 
 function renderAll() {
-    Shadows.render();
-    FlatBuildings.render();
     render();
 }
 
 function render() {
     context.clearRect(0, 0, width, height);
+    context.fillStyle = 'rgba(0,0,0)';
+    context.fillRect(0, 0, width, height);
 
     // data needed for rendering
     if (!meta || !data ||
@@ -40,25 +38,14 @@ function render() {
         x, y,
         offX = originX - meta.x,
         offY = originY - meta.y,
-        flatMaxHeight = FlatBuildings.getMaxHeight(),
-        sortCam = [camX + offX, camY + offY],
         footprint, roof,
         isVisible,
-        ax, ay, bx, by,
-        a, b, _a, _b
+        ax, ay, a, _a,
+        p, g
     ;
-
-    // TODO: FlatBuildings are drawn separetely, data has to be split
-    data.sort(function (a, b) {
-        return distance(b[CENTER], sortCam) / b[HEIGHT] - distance(a[CENTER], sortCam) / a[HEIGHT];
-    });
 
     for (i = 0, il = data.length; i < il; i++) {
         item = data[i];
-
-        if (item[HEIGHT] <= flatMaxHeight) {
-            continue;
-        }
 
         isVisible = false;
         f = item[FOOTPRINT];
@@ -93,50 +80,54 @@ function render() {
         for (j = 0, jl = footprint.length - 3; j < jl; j += 2) {
             ax = footprint[j];
             ay = footprint[j + 1];
-            bx = footprint[j + 2];
-            by = footprint[j + 3];
 
             // project 3d to 2d on extruded footprint
             _a = project(ax, ay, m);
-            _b = project(bx, by, m);
+
+            p = project(ax, ay, camZ / (camZ - 40));
+            g = context.createLinearGradient(ax, ay, p.x, p.y);
+            g.addColorStop(0,   'rgba(64,64,64,0.7)');
+            g.addColorStop(0.4, 'rgba(50,70,50,0.8)');
+            g.addColorStop(0.6, 'rgba(50,120,100,0.9)');
+            g.addColorStop(0.8, 'rgb(170,50,150)');
+            g.addColorStop(1,   'rgb(255,0,0)');
+            context.strokeStyle = g;
 
             if (item[MIN_HEIGHT]) {
                 a = project(ax, ay, n);
-                b = project(bx, by, n);
                 ax = a.x;
                 ay = a.y;
-                bx = b.x;
-                by = b.y;
             }
 
-            // backface culling check
-            if ((bx - ax) * (_a.y - ay) > (_a.x - ax) * (by - ay)) {
-                // depending on direction, set wall shading
-                if ((ax < bx && ay < by) || (ax > bx && ay > by)) {
-                    context.fillStyle = item[RENDER_COLOR][1] || altColorAlpha;
-                } else {
-                    context.fillStyle = item[RENDER_COLOR][0] || wallColorAlpha;
-                }
+            context.beginPath();
 
-                drawShape([
-                    bx, by,
-                    ax, ay,
-                    _a.x, _a.y,
-                    _b.x, _b.y
-                ]);
-            }
+            context.moveTo(ax, ay);
+            context.lineTo(_a.x, _a.y);
+            context.stroke();
+
             roof[j]     = _a.x;
             roof[j + 1] = _a.y;
         }
 
-        // fill roof and optionally stroke it
-        context.fillStyle   = item[RENDER_COLOR][2] || roofColorAlpha;
-        context.strokeStyle = item[RENDER_COLOR][1] || altColorAlpha;
-        drawShape(roof, true);
+        var v = item[HEIGHT] / 40;
+        if (v < 0.2) {
+            roofColorAlpha = 'rgba(64,64,64,0.7)';
+        } else if (v < 0.4) {
+            roofColorAlpha = 'rgba(50,70,50,0.8)';
+        } else if (v < 0.6) {
+            roofColorAlpha = 'rgba(50,120,100,0.9)';
+        } else if (v < 0.8) {
+            roofColorAlpha = 'rgb(170,50,150)';
+        } else {
+            roofColorAlpha = 'rgb(255,0,0)';
+        }
+
+        context.strokeStyle = roofColorAlpha;
+        drawShape(roof);
     }
 }
 
-function drawShape(points, stroke) {
+function drawShape(points) {
     if (!points.length) {
         return;
     }
@@ -147,10 +138,7 @@ function drawShape(points, stroke) {
         context.lineTo(points[i], points[i + 1]);
     }
     context.closePath();
-    if (stroke) {
-        context.stroke();
-    }
-    context.fill();
+    context.stroke();
 }
 
 function project(x, y, m) {

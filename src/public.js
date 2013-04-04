@@ -17,8 +17,7 @@ this.setMaxZoom = function (z) {
     maxZoom = z;
 };
 
-this.setDate = function (date) {
-    Shadows.setDate(date);
+this.setDate = function () {
     return this;
 };
 
