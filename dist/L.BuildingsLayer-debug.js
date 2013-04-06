@@ -442,7 +442,7 @@ var Layers = {
         var context = canvas.getContext('2d');
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.lineWidth = 2;
+        context.lineWidth = 1;
 
         try {
             context.mozImageSmoothingEnabled = false;
@@ -926,8 +926,6 @@ function renderAll() {
 
 function render() {
     context.clearRect(0, 0, width, height);
-    context.fillStyle = 'rgba(0,0,0)';
-    context.fillRect(0, 0, width, height);
 
     // data needed for rendering
     if (!meta || !data ||
@@ -988,15 +986,14 @@ function render() {
             // project 3d to 2d on extruded footprint
             _a = project(ax, ay, m);
 
-//            p = project(ax, ay, camZ / (camZ - 40));
-//            g = context.createLinearGradient(ax, ay, p.x, p.y);
-//            g.addColorStop(0,   'rgba(64,64,64,0.7)');
-//            g.addColorStop(0.4, 'rgba(50,70,50,0.8)');
-//            g.addColorStop(0.6, 'rgba(50,120,100,0.9)');
-//            g.addColorStop(0.8, 'rgb(170,50,150)');
-//            g.addColorStop(1,   'rgb(255,0,0)');
-//            context.strokeStyle = g;
-context.strokeStyle = roofColorAlpha;
+            p = project(ax, ay, camZ / (camZ - 40));
+            g = context.createLinearGradient(ax, ay, p.x, p.y);
+            g.addColorStop(0,   'rgba(64,64,64,0.7)');
+            g.addColorStop(0.4, 'rgba(50,70,50,0.8)');
+            g.addColorStop(0.6, 'rgba(50,120,100,0.9)');
+            g.addColorStop(0.8, 'rgb(170,50,150)');
+            g.addColorStop(1,   'rgb(255,0,0)');
+            context.strokeStyle = g;
 
             if (item[MIN_HEIGHT]) {
                 a = project(ax, ay, n);
@@ -1014,18 +1011,18 @@ context.strokeStyle = roofColorAlpha;
             roof[j + 1] = _a.y;
         }
 
-//        var v = item[HEIGHT] / 40;
-//        if (v < 0.2) {
-//            roofColorAlpha = 'rgba(64,64,64,0.7)';
-//        } else if (v < 0.4) {
-//            roofColorAlpha = 'rgba(50,70,50,0.8)';
-//        } else if (v < 0.6) {
-//            roofColorAlpha = 'rgba(50,120,100,0.9)';
-//        } else if (v < 0.8) {
-//            roofColorAlpha = 'rgb(170,50,150)';
-//        } else {
-//            roofColorAlpha = 'rgb(255,0,0)';
-//        }
+        var v = item[HEIGHT] / 40;
+        if (v < 0.2) {
+            roofColorAlpha = 'rgba(64,64,64,0.7)';
+        } else if (v < 0.4) {
+            roofColorAlpha = 'rgba(50,70,50,0.8)';
+        } else if (v < 0.6) {
+            roofColorAlpha = 'rgba(50,120,100,0.9)';
+        } else if (v < 0.8) {
+            roofColorAlpha = 'rgb(170,50,150)';
+        } else {
+            roofColorAlpha = 'rgb(255,0,0)';
+        }
 
         context.strokeStyle = roofColorAlpha;
         drawShape(roof);
