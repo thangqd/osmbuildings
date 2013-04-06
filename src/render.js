@@ -22,8 +22,6 @@ function renderAll() {
 
 function render() {
     context.clearRect(0, 0, width, height);
-    context.fillStyle = 'rgba(0,0,0)';
-    context.fillRect(0, 0, width, height);
 
     // data needed for rendering
     if (!meta || !data ||

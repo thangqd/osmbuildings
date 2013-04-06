@@ -27,7 +27,7 @@ var Layers = {
         var context = canvas.getContext('2d');
         context.lineCap = 'round';
         context.lineJoin = 'round';
-        context.lineWidth = 2;
+        context.lineWidth = 1;
 
         try {
             context.mozImageSmoothingEnabled = false;
