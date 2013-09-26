@@ -30,9 +30,6 @@ var Layers = (function() {
 
     var _items = [];
 
-    // TODO: improve this to _createItem(Layer) => layer.setContext(context)
-    Shadows.setContext(      _createItem());
-    FlatBuildings.setContext(_createItem());
     context = _createItem(); // default (global) render context
 
     var me = {};

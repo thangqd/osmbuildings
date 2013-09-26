@@ -14,7 +14,6 @@ exports.srcFiles = [
     srcPath + '/prefix.js',
     srcPath + '/shortcuts.js',
     srcPath + '/lib/Color.js',
-    srcPath + '/lib/SunPosition.js',
     srcPath + '/Import.js',
     srcPath + '/import/GeoJSON.js',
     srcPath + '/import/OSMXAPI.js',
@@ -25,8 +24,6 @@ exports.srcFiles = [
     srcPath + '/Cache.js',
     srcPath + '/Data.js',
     srcPath + '/render.js',
-    srcPath + '/Shadows.js',
-    srcPath + '/FlatBuildings.js',
     srcPath + '/Layers.js',
     srcPath + '/properties.js',
     srcPath + '/events.js',
@@ -35,12 +32,12 @@ exports.srcFiles = [
 ];
 
 exports.dstFiles = {
-    debug:    dstPath + '/OSMBuildings-{engine}.debug.js',
-    minified: dstPath + '/OSMBuildings-{engine}.js',
-    gzipped:  dstPath + '/OSMBuildings-{engine}.js.gz'
+    debug:    dstPath + '/OSMBuildingsAcid.debug.js',
+    minified: dstPath + '/OSMBuildingsAcid.js',
+    gzipped:  dstPath + '/OSMBuildingsAcid.js.gz'
 };
 
-exports.engines = ['Leaflet', 'OpenLayers'];
+exports.engines = ['Leaflet'];
 
 exports.jshint = {
 	"browser": true,

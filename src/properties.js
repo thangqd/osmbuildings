@@ -48,9 +48,5 @@ function setStyle(style) {
         roofColorAlpha = defaultRoofColor.setAlpha(zoomAlpha) + '';
     }
 
-    if (style.shadows !== undefined) {
-        Shadows.enable(style.shadows);
-    }
-
     renderAll();
 }

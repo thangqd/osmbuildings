@@ -42,7 +42,6 @@ function render() {
     var i, il, j, jl,
         item,
         h, _h, mh, _mh,
-        flatMaxHeight = FlatBuildings.MAX_HEIGHT,
         vp = {
             minX: originX,
             maxX: originX+width,
@@ -55,10 +54,6 @@ function render() {
 
     for (i = 0, il = renderItems.length; i < il; i++) {
         item = renderItems[i];
-
-        if (item.height+item.roofHeight <= flatMaxHeight) {
-            continue;
-        }
 
         isVisible = false;
         footprint = item.footprint;
@@ -186,12 +181,7 @@ function buildingPart(polygon, _h, _mh, color, altColor) {
 
         // backface culling check
         if ((b.x-a.x) * (_a.y-a.y) > (_a.x-a.x) * (b.y-a.y)) {
-            // depending on direction, set wall shading
-            if ((a.x < b.x && a.y < b.y) || (a.x > b.x && a.y > b.y)) {
-                context.fillStyle = altColor;
-            } else {
-                context.fillStyle = color;
-            }
+            context.fillStyle = color;
             drawPolygon([
                 b.x, b.y,
                 a.x, a.y,
@@ -235,36 +225,35 @@ function drawPolygon(points, stroke, holes) {
 }
 
 function drawCircle(c, r, stroke) {
-    context.beginPath();
-    context.arc(c.x, c.y, r, 0, PI*2);
-    if (stroke) {
-        context.stroke();
-    }
-    context.fill();
+  context.beginPath();
+  context.arc(c.x, c.y, r, 0, PI*2);
+  if (stroke) {
+    context.stroke();
+  }
 }
 
 function project(x, y, m) {
-    return {
-        x: (x-camX) * m + camX <<0,
-        y: (y-camY) * m + camY <<0
-    };
+  return {
+    x: (x-camX) * m + camX <<0,
+    y: (y-camY) * m + camY <<0
+  };
 }
 
 function debugMarker(p, color, size) {
-    context.fillStyle = color || '#ffcc00';
-    context.beginPath();
-    context.arc(p.x, p.y, size || 3, 0, PI*2, true);
-    context.closePath();
-    context.fill();
+  context.fillStyle = color || '#ffcc00';
+  context.beginPath();
+  context.arc(p.x, p.y, size || 3, 0, PI*2, true);
+  context.closePath();
+  context.fill();
 }
 
 function debugLine(a, b, color) {
-    context.strokeStyle = color || '#ff0000';
-    context.beginPath();
-    context.moveTo(a.x, a.y);
-    context.lineTo(b.x, b.y);
-    context.closePath();
-    context.stroke();
+  context.strokeStyle = color || '#ff0000';
+  context.beginPath();
+  context.moveTo(a.x, a.y);
+  context.lineTo(b.x, b.y);
+  context.closePath();
+  context.stroke();
 }
 
 function cylinder(c, r, h, minHeight, color, altColor) {
@@ -296,14 +285,14 @@ function cylinder(c, r, h, minHeight, color, altColor) {
         context.arc(_c.x, _c.y, _r, HALF_PI, a1, true);
         context.arc(c.x, c.y, r, a1, HALF_PI);
         context.closePath();
-        context.fill();
+        context.stroke();
 
         context.fillStyle = altColor;
         context.beginPath();
         context.arc(_c.x, _c.y, _r, a2, HALF_PI, true);
         context.arc(c.x, c.y, r, HALF_PI, a2);
         context.closePath();
-        context.fill();
+        context.stroke();
     }
 
     return { c:_c, r:_r };

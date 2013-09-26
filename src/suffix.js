@@ -4,7 +4,6 @@ proto.setStyle = function(style) {
 };
 
 proto.setDate = function(date) {
-    Shadows.setDate(date);
     return this;
 };
 
