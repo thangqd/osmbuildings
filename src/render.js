@@ -1,18 +1,29 @@
+var renderItems = [];
 
 function fadeIn() {
-    clearInterval(fadeTimer);
-    fadeFactor = 0;
-    fadeTimer = setInterval(function () {
-        fadeFactor += 0.5 * 0.2; // amount * easing
-        if (fadeFactor > 1) {
-            clearInterval(fadeTimer);
-            fadeFactor = 1;
-            // unset 'already present' marker
-            for (var i = 0, il = data.length; i < il; i++) {
-                data[i][IS_NEW] = 0;
+    if (animTimer) {
+        return;
+    }
+
+    animTimer = setInterval(function() {
+        var item, needed = false;
+        for (var i = 0, il = renderItems.length; i < il; i++) {
+            item = renderItems[i];
+            if (item.scale < 1) {
+                item.scale += 0.5*0.2; // amount*easing
+                if (item.scale > 1) {
+                    item.scale = 1;
+                }
+                needed = true;
             }
         }
-        render();
+
+        renderAll();
+
+        if (!needed) {
+            clearInterval(animTimer);
+            animTimer = null;
+        }
     }, 33);
 }
 
@@ -23,38 +34,39 @@ function renderAll() {
 function render() {
     context.clearRect(0, 0, width, height);
 
-    // data needed for rendering
-    if (!meta || !data ||
-        // show on high zoom levels only and avoid rendering during zoom
-        zoom < minZoom || isZooming) {
+    // show on high zoom levels only and avoid rendering during zoom
+    if (zoom < minZoom || isZooming) {
         return;
     }
 
     var i, il, j, jl,
         item,
-        f, h, m, n,
-        x, y,
-        offX = originX - meta.x,
-        offY = originY - meta.y,
-        footprint, roof,
+        h, _h, mh, _mh,
+        flatMaxHeight = FlatBuildings.MAX_HEIGHT,
+        vp = {
+            minX: originX,
+            maxX: originX+width,
+            minY: originY,
+            maxY: originY+height
+        },
+        footprint, roof, holes,
         isVisible,
-        ax, ay, a, _a,
-        p, g
-    ;
+        wallColor, altColor, roofColor;
 
-    for (i = 0, il = data.length; i < il; i++) {
-        item = data[i];
+    for (i = 0, il = renderItems.length; i < il; i++) {
+        item = renderItems[i];
+
+        if (item.height+item.roofHeight <= flatMaxHeight) {
+            continue;
+        }
 
         isVisible = false;
-        f = item[FOOTPRINT];
-        footprint = []; // typed array would be created each pass and is way too slow
-        for (j = 0, jl = f.length - 1; j < jl; j += 2) {
-            footprint[j]     = x = (f[j]     - offX);
-            footprint[j + 1] = y = (f[j + 1] - offY);
-
+        footprint = item.footprint;
+        for (j = 0, jl = footprint.length - 1; j < jl; j += 2) {
             // checking footprint is sufficient for visibility
+            // TODO: pre-filter by data tile position
             if (!isVisible) {
-                isVisible = (x > 0 && x < width && y > 0 && y < height);
+                isVisible = (footprint[j] > vp.minX && footprint[j] < vp.maxX && footprint[j+1] > vp.minY && footprint[j+1] < vp.maxY);
             }
         }
 
@@ -63,102 +75,284 @@ function render() {
         }
 
         // when fading in, use a dynamic height
-        h = item[IS_NEW] ? item[HEIGHT] * fadeFactor : item[HEIGHT];
-        // precalculating projection height scale
-        m = camZ / (camZ - h);
+        h = item.scale < 1 ? item.height*item.scale : item.height;
+        // precalculating projection height factor
+        _h = camZ / (camZ-h);
 
-        // prepare same calculations for min_height if applicable
-        if (item[MIN_HEIGHT]) {
-            h = item[IS_NEW] ? item[MIN_HEIGHT] * fadeFactor : item[MIN_HEIGHT];
-            n = camZ / (camZ - h);
+        mh = 0;
+        _mh = 0;
+        if (item.minHeight) {
+            mh = item.scale < 1 ? item.minHeight*item.scale : item.minHeight;
+            _mh = camZ / (camZ-mh);
         }
 
-        roof = []; // typed array would be created each pass and is way too slow
+        wallColor = item.wallColor || wallColorAlpha;
+        altColor  = item.altColor  || altColorAlpha;
+        roofColor = item.roofColor || roofColorAlpha;
+        context.strokeStyle = altColor;
 
-        for (j = 0, jl = footprint.length - 3; j < jl; j += 2) {
-            ax = footprint[j];
-            ay = footprint[j + 1];
-
-            // project 3d to 2d on extruded footprint
-            _a = project(ax, ay, m);
-
-            p = project(ax, ay, camZ / (camZ - 40));
-            g = context.createLinearGradient(ax, ay, p.x, p.y);
-            g.addColorStop(0,   'rgba(64,64,64,0.7)');
-            g.addColorStop(0.4, 'rgba(50,70,50,0.8)');
-            g.addColorStop(0.6, 'rgba(50,120,100,0.9)');
-            g.addColorStop(0.8, 'rgb(170,50,150)');
-            g.addColorStop(1,   'rgb(255,0,0)');
-            context.strokeStyle = g;
-
-            if (item[MIN_HEIGHT]) {
-                a = project(ax, ay, n);
-                ax = a.x;
-                ay = a.y;
+        if (item.shape === 'cylinder') {
+            roof = cylinder(
+                { x:item.center.x-originX, y:item.center.y-originY },
+                item.radius,
+                h, mh,
+                wallColor, altColor
+            );
+            if (item.roofShape === 'cylinder') {
+                roof = cylinder(
+                    { x:item.center.x-originX, y:item.center.y-originY },
+                    item.radius,
+                    h+item.roofHeight, h,
+                    roofColor
+                );
             }
-
-            context.beginPath();
-
-            context.moveTo(ax, ay);
-            context.lineTo(_a.x, _a.y);
-            context.stroke();
-
-            roof[j]     = _a.x;
-            roof[j + 1] = _a.y;
-        }
-
-        var v = item[HEIGHT] / 40;
-        if (v < 0.2) {
-            roofColorAlpha = 'rgba(64,64,64,0.7)';
-        } else if (v < 0.4) {
-            roofColorAlpha = 'rgba(50,70,50,0.8)';
-        } else if (v < 0.6) {
-            roofColorAlpha = 'rgba(50,120,100,0.9)';
-        } else if (v < 0.8) {
-            roofColorAlpha = 'rgb(170,50,150)';
+            context.fillStyle = roofColor;
+            drawCircle(roof.c, roof.r, true);
         } else {
-            roofColorAlpha = 'rgb(255,0,0)';
+            roof = buildingPart(footprint, _h, _mh, wallColor, altColor);
+            holes = [];
+            if (item.holes) {
+                for (j = 0, jl = item.holes.length; j < jl; j++) {
+                    holes[j] = buildingPart(item.holes[j], _h, _mh, wallColor, altColor);
+                }
+            }
+            context.fillStyle = roofColor;
+            drawPolygon(roof, true, holes);
         }
-
-        context.strokeStyle = roofColorAlpha;
-        drawShape(roof);
     }
 }
 
-function drawShape(points) {
+function buildingPart(polygon, _h, _mh, color, altColor) {
+/*
+    for (j = 0, jl = footprint.length - 3; j < jl; j += 2) {
+        g = context.createLinearGradient(ax, ay, p.x, p.y);
+        g.addColorStop(0,   'rgba(64,64,64,0.7)');
+        g.addColorStop(0.4, 'rgba(50,70,50,0.8)');
+        g.addColorStop(0.6, 'rgba(50,120,100,0.9)');
+        g.addColorStop(0.8, 'rgb(170,50,150)');
+        g.addColorStop(1,   'rgb(255,0,0)');
+        context.strokeStyle = g;
+
+        if (item[MIN_HEIGHT]) {
+            a = project(ax, ay, n);
+            ax = a.x;
+            ay = a.y;
+        }
+
+        context.beginPath();
+
+        context.moveTo(ax, ay);
+        context.lineTo(_a.x, _a.y);
+        context.stroke();
+
+        roof[j]     = _a.x;
+        roof[j + 1] = _a.y;
+    }
+
+    var v = item[HEIGHT] / 40;
+    if (v < 0.2) {
+        roofColorAlpha = 'rgba(64,64,64,0.7)';
+    } else if (v < 0.4) {
+        roofColorAlpha = 'rgba(50,70,50,0.8)';
+    } else if (v < 0.6) {
+        roofColorAlpha = 'rgba(50,120,100,0.9)';
+    } else if (v < 0.8) {
+        roofColorAlpha = 'rgb(170,50,150)';
+    } else {
+        roofColorAlpha = 'rgb(255,0,0)';
+    }
+
+    context.strokeStyle = roofColorAlpha;
+    drawShape(roof);
+*/
+
+    var a = { x:0, y:0 }, b = { x:0, y:0 },
+        _a, _b,
+        roof = [];
+    for (var i = 0, il = polygon.length-3; i < il; i += 2) {
+        a.x = polygon[i]  -originX;
+        a.y = polygon[i+1]-originY;
+        b.x = polygon[i+2]-originX;
+        b.y = polygon[i+3]-originY;
+
+        // project 3d to 2d on extruded footprint
+        _a = project(a.x, a.y, _h);
+        _b = project(b.x, b.y, _h);
+
+        if (_mh) {
+            a = project(a.x, a.y, _mh);
+            b = project(b.x, b.y, _mh);
+        }
+
+        // backface culling check
+        if ((b.x-a.x) * (_a.y-a.y) > (_a.x-a.x) * (b.y-a.y)) {
+            // depending on direction, set wall shading
+            if ((a.x < b.x && a.y < b.y) || (a.x > b.x && a.y > b.y)) {
+                context.fillStyle = altColor;
+            } else {
+                context.fillStyle = color;
+            }
+            drawPolygon([
+                b.x, b.y,
+                a.x, a.y,
+                _a.x, _a.y,
+                _b.x, _b.y
+            ]);
+        }
+        roof[i]   = _a.x;
+        roof[i+1] = _a.y;
+    }
+
+    return roof;
+}
+
+function drawPolygon(points, stroke, holes) {
     if (!points.length) {
         return;
     }
 
+    var i, il, j, jl;
+
     context.beginPath();
+
     context.moveTo(points[0], points[1]);
-    for (var i = 2, il = points.length; i < il; i += 2) {
-        context.lineTo(points[i], points[i + 1]);
+    for (i = 2, il = points.length; i < il; i += 2) {
+        context.lineTo(points[i], points[i+1]);
     }
+
+    if (holes) {
+        for (i = 0, il = holes.length; i < il; i++) {
+            points = holes[i];
+            context.moveTo(points[0], points[1]);
+            for (j = 2, jl = points.length; j < jl; j += 2) {
+                context.lineTo(points[j], points[j+1]);
+            }
+        }
+    }
+
     context.closePath();
     context.stroke();
+}
+
+function drawCircle(c, r, stroke) {
+    context.beginPath();
+    context.arc(c.x, c.y, r, 0, PI*2);
+    if (stroke) {
+        context.stroke();
+    }
+    context.fill();
 }
 
 function project(x, y, m) {
     return {
-        x: ((x - camX) * m + camX << 0),
-        y: ((y - camY) * m + camY << 0)
+        x: (x-camX) * m + camX <<0,
+        y: (y-camY) * m + camY <<0
     };
 }
 
-function debugMarker(x, y, color, size) {
+function debugMarker(p, color, size) {
     context.fillStyle = color || '#ffcc00';
     context.beginPath();
-    context.arc(x, y, size || 3, 0, PI * 2, true);
+    context.arc(p.x, p.y, size || 3, 0, PI*2, true);
     context.closePath();
     context.fill();
 }
 
-function debugLine(ax, ay, bx, by, color, size) {
+function debugLine(a, b, color) {
     context.strokeStyle = color || '#ff0000';
     context.beginPath();
-    context.moveTo(ax, ay);
-    context.lineTo(bx, by);
+    context.moveTo(a.x, a.y);
+    context.lineTo(b.x, b.y);
     context.closePath();
     context.stroke();
+}
+
+function cylinder(c, r, h, minHeight, color, altColor) {
+    var _h = camZ / (camZ-h),
+        _c = project(c.x, c.y, _h),
+        _r = r*_h,
+        a1, a2, col;
+
+    if (minHeight) {
+        var _mh = camZ / (camZ-minHeight);
+        c = project(c.x, c.y, _mh);
+        r = r*_mh;
+    }
+
+    var t = getTangents(c, r, _c, _r); // common tangents for ground and roof circle
+
+    // no tangents? roof overlaps everything near cam position
+    if (t) {
+        a1 = atan2(t[0].y1-c.y, t[0].x1-c.x);
+        a2 = atan2(t[1].y1-c.y, t[1].x1-c.x);
+
+        if (!altColor) {
+            col = Color.parse(color);
+            altColor = '' + col.setLightness(0.8);
+        }
+
+        context.fillStyle = color;
+        context.beginPath();
+        context.arc(_c.x, _c.y, _r, HALF_PI, a1, true);
+        context.arc(c.x, c.y, r, a1, HALF_PI);
+        context.closePath();
+        context.fill();
+
+        context.fillStyle = altColor;
+        context.beginPath();
+        context.arc(_c.x, _c.y, _r, a2, HALF_PI, true);
+        context.arc(c.x, c.y, r, HALF_PI, a2);
+        context.closePath();
+        context.fill();
+    }
+
+    return { c:_c, r:_r };
+}
+
+// http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Tangents_between_two_circles
+function getTangents(c1, r1, c2, r2) {
+    var dx = c1.x-c2.x,
+        dy = c1.y-c2.y,
+        dr = r1-r2,
+        sqdist = (dx*dx) + (dy*dy);
+
+    if (sqdist <= dr*dr) {
+        return;
+    }
+
+    var dist = sqrt(sqdist),
+        vx = -dx/dist,
+        vy = -dy/dist,
+        c  =  dr/dist,
+        res = [],
+        h, nx, ny;
+
+    // Let A, B be the centers, and C, D be points at which the tangent
+    // touches first and second circle, and n be the normal vector to it.
+    //
+    // We have the system:
+    //   n * n = 1      (n is a unit vector)
+    //   C = A + r1 * n
+    //   D = B + r2 * n
+    //   n * CD = 0     (common orthogonality)
+    //
+    // n * CD = n * (AB + r2*n - r1*n) = AB*n - (r1 -/+ r2) = 0,  <=>
+    // AB * n = (r1 -/+ r2), <=>
+    // v * n = (r1 -/+ r2) / d,  where v = AB/|AB| = AB/d
+    // This is a linear equation in unknown vector n.
+    // Now we're just intersecting a line with a circle: v*n=c, n*n=1
+
+    h = sqrt(max(0, 1 - c*c));
+    for (var sign = 1; sign >= -1; sign -= 2) {
+        nx = vx*c - sign*h*vy;
+        ny = vy*c + sign*h*vx;
+        res.push({
+            x1: c1.x + r1*nx <<0,
+            y1: c1.y + r1*ny <<0,
+            x2: c2.x + r2*nx <<0,
+            y2: c2.y + r2*ny <<0
+        });
+    }
+
+    return res;
 }
