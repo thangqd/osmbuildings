@@ -17,6 +17,7 @@ html, body {
 }
 </style>
 <link rel="stylesheet" href="leaflet-0.7/leaflet.css">
+<script src="gpc/gpc.js"></script>
 <script src="leaflet-0.7/leaflet-src.js"></script>
 <script src="scripts.js.php?engine=Leaflet"></script>
 </head>
@@ -32,8 +33,8 @@ html, body {
 //var map = new L.Map('map').setView([37.78923, -122.40597], 16); // SF
 //var map = new L.Map('map').setView([48.86083, 2.33565], 18); // Louvre, Paris
 
-//new L.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', { maxZoom: 18 }).addTo(map);
-  new L.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.gm744p3p/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+  new L.TileLayer('http://otile1.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', { maxZoom: 18 }).addTo(map);
+//new L.TileLayer('http://{s}.tiles.mapbox.com/v3/osmbuildings.gm744p3p/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
   var osmb = new OSMBuildings(map).setDate(new Date('2013-12-12 10:30')).loadData();
 //INSERT INTO buildings (the_geom, height) SELECT the_geom, CAST(REPLACE(height, 'm', '') AS int) FROM map_polygon WHERE building IS NOT NULL;

@@ -70,6 +70,7 @@ var Data = {
       res = [],
       item,
       height, minHeight, footprint,
+      centerAndBbox,
       color, wallColor, altColor,
       roofColor, roofHeight,
       holes, innerFootprint,
@@ -124,10 +125,7 @@ var Data = {
         continue;
       }
 
-//var poly = new PolyDefault();
-//for (var n = 0, nl = footprint.length-3; n < nl; n+=2) {
-//  poly.addPoint(new Point(footprint[n], footprint[n+1]));
-//}
+      centerAndBbox = getCenterAndBbox(footprint);
 
       res.push({
         id:         item.id,
@@ -139,70 +137,32 @@ var Data = {
         roofColor:  roofColor,
         roofShape:  item.roofShape,
         roofHeight: roofHeight,
-        center:     getCenter(footprint),
+        center:     centerAndBbox.center,
+        bbox:       centerAndBbox.bbox,
         holes:      holes.length ? holes : null,
         shape:      item.shape, // TODO: drop footprint
         radius:     item.radius/meterToPixel
       });
     }
 
-//var res2 = [];
-//var diff;
-//
-//var hit = false;
-//for (var i = 0, il = res.length; i < il; i++) {
-//  if (res[i] === null) continue;
-//  if (res[i].height > 8) {
-//    res2.push(res[i]);
-//    res[i] = null;
-//    continue;
-//  }
-//  for (var j = 0, jl = res.length; j < jl; j++) {
-//    if (res[j] === null) continue;
-//    if (j === i) continue;
-//
-//    diff = res[i].poly.union(res[j].poly);
-//
-//    if (diff.getNumInnerPoly() === 1) {
-//      res[i].poly = diff;
-//      res[j] = null;
-//      hit = true;
-//    }
-//  }
-//}
-//
-//return res2;
+console.log('A', res.length);
 
-//var getPolygonVertices = function(poly) {
-//	var vertices=[];
-//	var numPoints = poly.getNumPoints();
-//	var i;
-//
-//	for(i=0;i<numPoints;i++) {
-//		vertices.push([poly.getX(i) , poly.getY(i)]);
-//	}
-//	return vertices;
-//}
-
-//var num = polygon.getNumInnerPoly();
-//var poly = polygon.getInnerPoly(i);
-
-
+var len = res.length, uni;
 /*
-function search(e) {
-    tree.search([e.clientX, e.clientY, e.clientX + 1, e.clientY + 1]);
-}
-
-function remove() {
-    data.sort(tree.compareMinX);
-    for (var i = 0; i < 10000; i++) {
-        tree.remove(data[i]);
+for (i = 0; i < len; i++) {
+  for (j = i+1; j < len; j++) {
+    if (bboxIntersects(res[i].bbox, res[j].bbox)) {
+      uni = unionClose(res[i], res[j], 50);
+      if (uni === true) {
+        res.splice(j, 1);
+        len--;
+        j--;
+      }
     }
-    data.splice(0, 10000);
-    draw();
+  }
 }
 */
-
+console.log('B', res.length);
 
     return res;
   },
