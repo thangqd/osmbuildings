@@ -1,6 +1,5 @@
 var Import = {
 
-    DEFAULT_HEIGHT: 5,
     YARD_TO_METER: 0.9144,
     FOOT_TO_METER: 0.3048,
     INCH_TO_METER: 0.0254,
@@ -37,14 +36,6 @@ var Import = {
       return revPoints;
     },
 
-    windOuterPolygon: function(points) {
-      return this.makeWinding(points, this.clockwise);
-    },
-
-    windInnerPolygon: function(points) {
-      return this.makeWinding(points, this.counterClockwise);
-    },
-
     toMeters: function(str) {
       str = '' + str;
       var value = parseFloat(str);
@@ -74,7 +65,8 @@ var Import = {
         minLat = min(minLat, points[i]);
         maxLat = max(maxLat, points[i]);
       }
-      return round((maxLat-minLat) / RAD * 6378137 / 2); // 6378137 = Earth radius
+
+      return (maxLat-minLat) / RAD * 6378137 / 2 <<0; // 6378137 = Earth radius
     },
 
     materialColors: {

@@ -1,9 +1,11 @@
 var Simplified = {
 
-  MAX_HEIGHT: 8,
+  isSimple: function(item) {
+    return item.height+item.roofHeight <= DEFAULT_HEIGHT && !item.wallColor && !item.roofColor && !item.holes;
+  },
 
   render: function() {
-    this.context.clearRect(0, 0, width, height);
+    this.context.clearRect(0, 0, WIDTH, HEIGHT);
 
     // show on high zoom levels only and avoid rendering during zoom
     if (zoom < minZoom || isZooming) {
@@ -22,7 +24,7 @@ var Simplified = {
 
     for (i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
-      if (item.height+item.roofHeight > this.MAX_HEIGHT) {
+      if (!this.isSimple(item)) {
         continue;
       }
 
@@ -35,7 +37,7 @@ var Simplified = {
 
         // checking footprint is sufficient for visibility
         if (!isVisible) {
-          isVisible = (x > 0 && x < width && y > 0 && y < height);
+          isVisible = (x > 0 && x < WIDTH && y > 0 && y < HEIGHT);
         }
       }
 

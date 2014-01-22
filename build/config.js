@@ -3,7 +3,7 @@ var srcPath = '../src';
 var dstPath = '../dist';
 
 exports.COPYRIGHT = '/**\n' +
-                    ' * Copyright (C) 2013 OSM Buildings, Jan Marsch\n' +
+                    ' * Copyright (C) 2014 OSM Buildings, Jan Marsch\n' +
                     ' * A leightweight JavaScript library for visualizing building geometry on interactive maps.\n' +
                     ' * @osmbuildings, http://osmbuildings.org\n' +
                     ' */\n';
@@ -13,7 +13,7 @@ exports.VERSION = '0.1.9a';
 exports.srcFiles = [
   srcPath + '/prefix.js',
   srcPath + '/shortcuts.js',
-  srcPath + '/lib/Color.js',
+  srcPath + '/../lib/Color.js/Color.js',
   srcPath + '/lib/SunPosition.js',
   srcPath + '/Import.js',
   srcPath + '/import/GeoJSON.js',
@@ -46,7 +46,7 @@ exports.jshint = {
 	"browser": true,
 	"node": true,
 	"predef": ["XDomainRequest", "L", "OpenLayers", "google"],
-//    "unused": true,
+//"unused": true,
 
 	"debug": false,
 	"devel": false,
@@ -83,11 +83,11 @@ exports.jshint = {
 	"onevar": false,
 	"plusplus": false,
 	"sub": false,
-//	"indent": 4,
+//"indent": 4,
 
 	"eqeqeq": true,
-//	"trailing": true,
-//	"white": false,
+//"trailing": true,
+//"white": false,
 	"smarttabs": true
 };
 

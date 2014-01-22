@@ -1,7 +1,9 @@
 var Shadows = {
 
   enabled: true,
-  color: new Color(0, 0, 0),
+  color: '#666666',
+  blurColor: '#000000',
+  blurSize: 15,
   date: new Date(),
   direction: { x:0, y:0 },
 
@@ -13,7 +15,8 @@ var Shadows = {
   },
 
   cylinder: function(c, r, h, mh) {
-    var _c = this.project(c.x, c.y, h),
+    var
+      _c = this.project(c.x, c.y, h),
       a1, a2;
 
     if (mh) {
@@ -34,9 +37,9 @@ var Shadows = {
   },
 
   render: function() {
-    var center, sun, length, alpha, colorStr;
+    var center, sun, length, alpha;
 
-    this.context.clearRect(0, 0, width, height);
+    this.context.clearRect(0, 0, WIDTH, HEIGHT);
 
     // show on high zoom levels only and avoid rendering during zoom
     if (!this.enabled || zoom < minZoom || isZooming) {
@@ -44,7 +47,7 @@ var Shadows = {
     }
 
     // TODO: at some point, calculate this just on demand
-    center = pixelToGeo(originX+halfWidth, originY+halfHeight);
+    center = pixelToGeo(originX+HALF_WIDTH, originY+HALF_HEIGHT);
     sun = getSunPosition(this.date, center.latitude, center.longitude);
 
     if (sun.altitude <= 0) {
@@ -52,15 +55,11 @@ var Shadows = {
     }
 
     length = 1 / tan(sun.altitude);
-    alpha = 0.4 / length;
+    alpha = 0.45 / length;
     this.direction.x = cos(sun.azimuth) * length;
     this.direction.y = sin(sun.azimuth) * length;
 
-    // TODO: maybe introduce Color.setAlpha()
-    this.color.a = alpha;
-    colorStr = this.color + '';
-
-    var i, il, j, jl,
+    var i, il, j, jl, k, kl,
       item,
       f, h, mh,
       x, y,
@@ -69,12 +68,15 @@ var Shadows = {
       isVisible,
       ax, ay, bx, by,
       a, b, _a, _b,
-      points,
+      points, locPoints,
       specialItems = [],
       clipping = [],
       dataItems = Data.items;
 
-    this.context.fillStyle = colorStr;
+    this.context.canvas.style.opacity = alpha / (ZOOM_ALPHA * 2);
+    this.context.shadowColor = this.blurColor;
+    this.context.shadowBlur = this.blurSize * (ZOOM_ALPHA / 2);
+    this.context.fillStyle = this.color;
     this.context.beginPath();
 
     for (i = 0, il = dataItems.length; i < il; i++) {
@@ -94,7 +96,7 @@ var Shadows = {
 
         // TODO: checking footprint is sufficient for visibility - NOT VALID FOR SHADOWS!
         if (!isVisible) {
-          isVisible = (x > 0 && x < width && y > 0 && y < height);
+          isVisible = (x > 0 && x < WIDTH && y > 0 && y < HEIGHT);
         }
       }
 
@@ -164,8 +166,24 @@ var Shadows = {
         }
       }
 
-      if (!mh) {
+      if (!mh) { // if object is hovered, there is no need to clip the footprint
         clipping.push(footprint);
+      }
+
+      if (item.holes) {
+        for (j = 0, jl = item.holes.length; j < jl; j++) {
+          points = item.holes[j];
+          locPoints = [points[0]-originX, points[1]-originY];
+          this.context.moveTo(locPoints[0], locPoints[1]);
+          for (k = 2, kl = points.length; k < kl; k += 2) {
+            locPoints[k]   = points[k]-originX;
+            locPoints[k+1] = points[k+1]-originY;
+            this.context.lineTo(locPoints[k], locPoints[k+1]);
+          }
+          if (!mh) { // if object is hovered, there is no need to clip a hole
+            clipping.push(locPoints);
+          }
+        }
       }
     }
 
@@ -176,11 +194,15 @@ var Shadows = {
       }
     }
 
+    this.context.closePath();
     this.context.fill();
+
+    this.context.shadowBlur = null;
 
     // now draw all the footprints as negative clipping mask
     this.context.globalCompositeOperation = 'destination-out';
     this.context.beginPath();
+
     for (i = 0, il = clipping.length; i < il; i++) {
       points = clipping[i];
       this.context.moveTo(points[0], points[1]);

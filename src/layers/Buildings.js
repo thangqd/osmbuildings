@@ -108,8 +108,8 @@ var Buildings = {
       a2 = atan2(t[1].y1-c.y, t[1].x1-c.x);
 
       if (!altColor) {
-        col = Color.parse(color);
-        altColor = '' + col.setLightness(0.8);
+        col = parseColor(color);
+        altColor = ''+ col.lightness(0.8);
       }
 
       this.context.fillStyle = color;
@@ -131,7 +131,7 @@ var Buildings = {
   },
 
   render: function() {
-    this.context.clearRect(0, 0, width, height);
+    this.context.clearRect(0, 0, WIDTH, HEIGHT);
 
     // show on high zoom levels only and avoid rendering during zoom
     if (zoom < minZoom || isZooming) {
@@ -141,20 +141,17 @@ var Buildings = {
     var i, il, j, jl,
       item,
       h, _h, mh, _mh,
-      flatMaxHeight = Simplified.MAX_HEIGHT,
       sortCam = { x:camX+originX, y:camY+originY },
       vp = {
         minX: originX,
-        maxX: originX+width,
+        maxX: originX+WIDTH,
         minY: originY,
-        maxY: originY+height
+        maxY: originY+HEIGHT
       },
       footprint, roof, holes,
       isVisible,
       wallColor, altColor, roofColor,
       dataItems = Data.items;
-
-    // TODO: Simplified are drawn separately, data could be split
 
     dataItems.sort(function(a, b) {
       return (a.minHeight-b.minHeight) || getDistance(b.center, sortCam) - getDistance(a.center, sortCam) || (b.height-a.height);
@@ -163,7 +160,7 @@ var Buildings = {
     for (i = 0, il = dataItems.length; i < il; i++) {
       item = dataItems[i];
 
-      if (item.height+item.roofHeight <= flatMaxHeight) {
+      if (Simplified.isSimple(item)) {
         continue;
       }
 

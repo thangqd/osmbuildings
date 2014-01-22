@@ -4,18 +4,18 @@ function setOrigin(origin) {
 }
 
 function setCamOffset(offset) {
-  camX = halfWidth + offset.x;
-  camY = height    + offset.y;
+  camX = HALF_WIDTH+offset.x;
+  camY = HEIGHT   +offset.y;
 }
 
 function setSize(size) {
-  width  = size.w;
-  height = size.h;
-  halfWidth  = width /2 <<0;
-  halfHeight = height/2 <<0;
-  camX = halfWidth;
-  camY = height;
-  Layers.setSize(width, height);
+  WIDTH  = size.w;
+  HEIGHT = size.h;
+  HALF_WIDTH  = WIDTH /2 <<0;
+  HALF_HEIGHT = HEIGHT/2 <<0;
+  camX = HALF_WIDTH;
+  camY = HEIGHT;
+  Layers.setSize(WIDTH, HEIGHT);
   maxHeight = camZ-50;
 }
 
@@ -23,11 +23,11 @@ function setZoom(z) {
   zoom = z;
   size = MAP_TILE_SIZE <<zoom;
 
-  zoomAlpha = 1 - fromRange(zoom, minZoom, maxZoom, 0, 0.3);
+  ZOOM_ALPHA = 1 - fromRange(zoom, minZoom, maxZoom, 0, 0.3);
 
-  wallColorAlpha = defaultWallColor.setAlpha(zoomAlpha) + '';
-  altColorAlpha  = defaultAltColor.setAlpha( zoomAlpha) + '';
-  roofColorAlpha = defaultRoofColor.setAlpha(zoomAlpha) + '';
+  wallColorAlpha = defaultWallColor.alpha(ZOOM_ALPHA) + '';
+  altColorAlpha  = defaultAltColor.alpha( ZOOM_ALPHA) + '';
+  roofColorAlpha = defaultRoofColor.alpha(ZOOM_ALPHA) + '';
 }
 
 function onResize(e) {

@@ -76,7 +76,8 @@ var Data = {
       holes, innerFootprint,
       zoomDelta = maxZoom-zoom,
       // TODO: move this to onZoom
-      meterToPixel = 156412 / Math.pow(2, zoom) / 1.5; // http://wiki.openstreetmap.org/wiki/Zoom_levels, TODO: without factor 1.5, numbers don't match (lat/lon: Berlin)
+      centerGeo = pixelToGeo(originX+HALF_WIDTH, originY+HALF_HEIGHT),
+      metersPerPixel = -40075040 * cos(centerGeo.latitude) / Math.pow(2, zoom+8); // see http://wiki.openstreetmap.org/wiki/Zoom_levels
 
     for (i = 0, il = items.length; i < il; i++) {
       item = items[i];
@@ -94,6 +95,7 @@ var Data = {
 
       holes = [];
       if (item.holes) {
+        // TODO: simplify
         for (j = 0, jl = item.holes.length; j < jl; j++) {
           if ((innerFootprint = this.getPixelFootprint(item.holes[j]))) {
             holes.push(innerFootprint);
@@ -104,23 +106,22 @@ var Data = {
       wallColor = null;
       altColor  = null;
       if (item.wallColor) {
-        if ((color = Color.parse(item.wallColor))) {
-          wallColor = color.setAlpha(zoomAlpha);
-          altColor  = ''+ wallColor.setLightness(0.8);
+        if ((color = parseColor(item.wallColor))) {
+          wallColor = color.alpha(ZOOM_ALPHA);
+          altColor  = ''+ wallColor.lightness(0.8);
           wallColor = ''+ wallColor;
         }
       }
 
       roofColor = null;
       if (item.roofColor) {
-        if ((color = Color.parse(item.roofColor))) {
-          roofColor = ''+ color.setAlpha(zoomAlpha);
+        if ((color = parseColor(item.roofColor))) {
+          roofColor = ''+ color.alpha(ZOOM_ALPHA);
         }
       }
 
       roofHeight = item.roofHeight >>zoomDelta;
 
-      // TODO: move buildings without height to Simplified
       if (height <= minHeight && roofHeight <= 0) {
         continue;
       }
@@ -141,7 +142,7 @@ var Data = {
         bbox:       centerAndBbox.bbox,
         holes:      holes.length ? holes : null,
         shape:      item.shape, // TODO: drop footprint
-        radius:     item.radius/meterToPixel
+        radius:     item.radius/metersPerPixel
       });
     }
 
@@ -207,7 +208,7 @@ console.log('B', res.length);
     var lat, lon,
       parsedData, cacheKey,
       nw = pixelToGeo(originX,       originY),
-      se = pixelToGeo(originX+width, originY+height),
+      se = pixelToGeo(originX+WIDTH, originY+HEIGHT),
       sizeLat = DATA_TILE_SIZE,
       sizeLon = DATA_TILE_SIZE*2;
 
