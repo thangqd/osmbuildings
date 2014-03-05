@@ -57,5 +57,17 @@ proto.screenshot = function(forceDownload) {
   return dataURL;
 };
 
+proto.highlight = function(id) {
+//
+  return this;
+};
+
+proto.onClick = function(handler, scope) {
+  Interaction.onClick = function(feature) {
+    return handler.call(scope, feature);
+  };
+  return this;
+};
+
 osmb.VERSION     = VERSION;
 osmb.ATTRIBUTION = ATTRIBUTION;

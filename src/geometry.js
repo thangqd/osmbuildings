@@ -133,3 +133,22 @@ function getTangents(c1, r1, c2, r2) {
 
   return res;
 }
+
+function isInside(point, polygon) {
+  var
+    ax, ay, bx, by,
+    odd = false;
+
+  for (var i = 0, il = polygon.length-1; i < il; i+=2) {
+    ax = polygon[i];
+    ay = polygon[i+1];
+    bx = polygon[i+2] || polygon[0];
+    by = polygon[i+3] || polygon[1];
+    if ((ay < point.y && by >= point.y) || (by < point.y && ay >= point.y)) {
+      if (ax + (point.y-ay) / (by-ay) * (bx-ax) < point.x) {
+        odd = !odd;
+      }
+    }
+  }
+  return odd;
+}
