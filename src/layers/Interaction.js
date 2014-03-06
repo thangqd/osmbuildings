@@ -29,7 +29,7 @@ var Interaction = {
 
   getTarget: function(pos) {
     // show on high zoom levels only and avoid rendering during zoom
-    if (zoom < minZoom || isZooming) {
+    if (ZOOM < MIN_ZOOM || isZooming) {
       return;
     }
 
@@ -55,8 +55,8 @@ var Interaction = {
       f = item.footprint;
       footprint = [];
       for (j = 0, jl = f.length - 1; j < jl; j += 2) {
-        footprint[j]   = x = f[j]  -originX;
-        footprint[j+1] = y = f[j+1]-originY;
+        footprint[j]   = x = f[j]  -ORIGIN_X;
+        footprint[j+1] = y = f[j+1]-ORIGIN_Y;
 
         if (!isVisible) {
           isVisible = (x > 0 && x < WIDTH && y > 0 && y < HEIGHT);
@@ -85,7 +85,7 @@ var Interaction = {
         }
         specialItems.push({
           shape:item.shape,
-          center:{ x:item.center.x-originX, y:item.center.y-originY },
+          center:{ x:item.center.x-ORIGIN_X, y:item.center.y-ORIGIN_Y },
           radius:item.radius,
           h:h, mh:mh
         });
